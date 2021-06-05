@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 #encoding=UTF-8
 
 import os
@@ -116,7 +117,7 @@ class TMS:
             tags = task_entry[2]
         imm = input('Urgent? [0/1/y/n/д/н]\n\t')
         if imm == '_':
-            imm = tasks_entry[3]
+            imm = task_entry[3]
         else:
             try:
                 imm = {"0": False, "1": True ,"n": False, "y": True, "н": False, "д": True}[imm]
