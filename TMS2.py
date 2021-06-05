@@ -10,17 +10,20 @@ class TMS:
     def __init__(self, directory):
         os.chdir(directory)
         self.mode = 'tasks'
+        self.current_project = None
     
     def load(self):
         with open("tasks", encoding='UTF-8') as f:
             inp = json.load(f)
             self.tasks = inp['Tasks']
             self.info = inp['Info']
+            self.projects = inp["Projects"]
 
         with open("info", encoding='UTF-8') as f:
             inp = json.load(f)
             self.task_counter = inp['TaskCounter']
             self.info_counter = inp['InfoCounter']
+            self.project_counters = inp["ProjectCounters"]
 
     def save(self):
         if self.tasks == None:
@@ -28,11 +31,12 @@ class TMS:
             print("Exiting app to prevent data corruption")
             exit(1)
         with open('tasks', 'w', encoding='UTF-8') as f:
-            json.dump({"Tasks": self.tasks, "Info": self.info}, 
+            json.dump({"Tasks": self.tasks, "Info": self.info, "Projects": self.projects}, 
                     f, ensure_ascii = False, indent=4)    
         with open('info', 'w', encoding='UTF-8') as f:
             json.dump({"TaskCounter": self.task_counter, 
-                "InfoCounter": self.info_counter}, 
+                "InfoCounter": self.info_counter,
+                "ProjectCounters": self.project_counters}, 
                     f, ensure_ascii = False, indent=4)    
         print('Progress has been saved.')
 
@@ -57,6 +61,33 @@ class TMS:
         self.info_counter += 1
         self.info['Noted'].append([self.info_counter, info, tags])
         print(f'Information {info} was noted with tags {tags} and with id {self.info_counter}')
+
+    def add_project(self, project):
+        if project in self.projects.keys():
+            print("Project already exists. Aborting operation")
+            return
+        if project == "Global":
+            print("Can't created project Global. Operation aborted")
+            return
+        self.projects[project] = {"Current": [], "Done": []}
+        self.project_counters["Global"] += 1
+        self.project_counters[project] = 0
+        print(f'Empty project {project} has been created with id {self.project_counters["Global"]}')
+
+    def project_checkout(self, project):
+        if project not in self.projects.keys():
+            print("No such project")
+            return
+        self.current_project = project
+        print(f"Switched to project {project}")
+
+
+    def add_project_task(self, project_task):
+        self.project_counters[self.current_project] += 1
+        task = [self.project_counters[self.current_project], project_task]
+        self.projects[self.current_project]["Current"].append(task)
+        print(f"Task {project_task} was added to project {self.current_project} with id {task[0]}")
+
 
     def switch_task_category(self, category, task_id):
         location, task_entry = self.find_task_by_id(task_id)
@@ -237,6 +268,9 @@ class TMS:
             elif command_splitted[0] == 'tasks':
                 self.mode = 'tasks'
                 print('Switched to Tasks')
+            elif command_splitted[0] == 'projects':
+                self.mode = 'projects'
+                print('Switched to Projects')
             elif command_splitted[0] == 'p':
                 list_of_tags = self.extract_tags(command_splitted)
                 list_of_params = self.extract_params(command_splitted)
@@ -265,6 +299,16 @@ class TMS:
             elif self.mode == 'info':
                 if input('Do you want to add this as an info? [Y/n, Д/н]:\n\t') in ['Y', 'y', 'Д', 'д']:
                     self.add_info(command)
+            elif self.mode == 'projects':
+                if command_splitted[0] == "co":
+                    self.project_checkout(command[3:])
+                elif self.current_project == None:
+                    if input('Do you want to add this as a new project? [Y/n, Д/н]:\n\t') in ['Y', 'y', 'Д', 'д']:
+                        self.add_project(command)
+                else:
+                    if input(f'Do you want to add this as a task to project {self.current_project}? [Y/n, Д/н]:\n\t') in ['Y', 'y', 'Д', 'д']:
+                        self.add_project_task(command)
+
 
 
 
