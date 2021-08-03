@@ -223,6 +223,26 @@ class TMS:
             else:
                 print(f'Unknown parameter {param}')
 
+    def print_project(self):
+        def print_category(self, category):
+            print_list = []
+            for i in self.projects[self.current_project][category]:
+                print_list.append(i)
+            
+            if len(print_list):
+                print(f'{category}: ')
+                for i in print_list:
+                    print(f'\t{i[0]}: {i[1]}')
+            else:
+                print(f'{category} is empty!')
+            
+        if self.current_project == None:
+            print("Project is not selected")
+            return
+        print_category(self, "Current")
+        print_category(self, "Done")
+
+        
     def extract_tags(self, list_of_words):
         list_of_tags = []
         i = 0
@@ -276,8 +296,10 @@ class TMS:
                 list_of_params = self.extract_params(command_splitted)
                 if self.mode == 'tasks':
                     self.print_tasks(list_of_params, list_of_tags)       
-                else:
+                elif self.mode == "info":
                     self.print_info(list_of_params, list_of_tags)       
+                else:
+                    self.print_project()
             elif self.mode == 'tasks':
                 if command_splitted[0] in ['D', 'd', 'в', 'В']:
                     self.switch_task_category('Done', int(command[2:]))
